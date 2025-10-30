@@ -6,11 +6,20 @@
     <title>Document</title>
 </head>
 <body>
-    <h2>SIGNUP Form</h2>
-    <form>
-        Email <input type="email" placeholder="email" required> <br><br>
-        Password <input type="password" placeholder="password"> <br><br>
-        <input type="submit" value="Register">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <h2>User SIGNUP Form</h2>
+    <form action="/signup" method="post">
+        Email <input type="email" name="email" placeholder="email" required> <br><br>
+        Password <input type="password" name="password" placeholder="password"> <br><br>
+        <input type="submit" value="SIGNUP">
     </form>
 </body>
 </html>

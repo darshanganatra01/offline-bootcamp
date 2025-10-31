@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <h2>Edit Theatre</h2>
+    <form action="/edit_theatre/{{jinjacurrent_theatre.tid}}" , method ="post">
+        Theatre Name <input type="text" placeholder="theatre name" name="theatre_name" value="{{jinjacurrent_theatre.theatre_name}}" required> <br><br>
+        Theatre Location <input type="text" placeholder="theatre location" name="theatre_location" value="{{jinjacurrent_theatre.location}}" required> <br><br>
+        Theatre Franchise <input type="text" placeholder="theatre franchise" name="theatre_franchise" value="{{jinjacurrent_theatre.franchise}}" required> <br><br>
+        <input type="submit" value="Update Theatre">
+    </form>
+</body>
+</html>

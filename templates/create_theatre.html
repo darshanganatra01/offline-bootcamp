@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <h2>Create Theatre Form</h2>
+    <form action="/create_theatre" method="post">
+        Theatre Email <input type="email" placeholder="theatre email" name="theatre_email" required> <br><br>
+        Theatre Password <input type="password" placeholder="theatre password" name="theatre_password" required> <br><br>
+        Theatre Name <input type="text" placeholder="theatre name" name="theatre_name" required> <br><br>
+        Theatre Location <input type="text" placeholder="theatre location" name="theatre_location" required> <br><br>
+        Theatre Franchise <input type="text" placeholder="theatre franchise" name="theatre_franchise" required> <br><br>
+        <input type="submit" value="Create Theatre">
+</body>
+</html>

@@ -34,6 +34,18 @@ class User(db.Model):
     email=db.Column(db.String,unique=True,nullable=False)
     password=db.Column(db.String,nullable=False)
     f_rid = db.Column(db.Integer,db.ForeignKey(Role.rid),nullable=False)
+    roles=db.relationship(Role,backref='users',lazy=True)
+
+class Theatre(db.Model):
+    tid=db.Column(db.Integer,primary_key=True,autoincrement=True)
+    theatre_name=db.Column(db.String,unique=True,nullable=False)
+    location=db.Column(db.String,nullable=False)
+    franchise=db.Column(db.String,nullable=False)
+    u_id=db.Column(db.Integer,db.ForeignKey(User.uid),nullable=False)
+    user = db.relationship(User,backref='theatre',lazy=True)   
+    
+# <User x>.roles ---> <Role x>
+# <Role y>.users --> [<User x>, <User y>, ...]
 
 #User1 email1 pass1 roleid1
 #User2 email2 pass2 roleid1
@@ -101,7 +113,9 @@ def dashboard_page():
     jinjaemail = session.get("email")
     role = session.get("f_rid")
     if role == 1:
-        return render_template("AdminDashboard.html",jinjaemail=jinjaemail)
+        theatres = Theatre.query.all()
+        users = User.query.all()
+        return render_template("AdminDashboard.html",jinjaemail=jinjaemail,theatres=theatres,users=users)
     if role == 2:
         return render_template("Dashboard.html",jinjaemail=jinjaemail)
 
@@ -122,6 +136,14 @@ def create_roles():
         )
         db.session.add(customer_role)
         db.session.commit()
+    check_theatre = Role.query.filter_by(role_name="Theatre").first()
+    if check_theatre is None:
+        theatre_role = Role(
+            role_name = "Theatre",
+            description = "theatre owner"
+        )
+        db.session.add(theatre_role)
+        db.session.commit()
 
 def auto_admin_creation():
     check_admin_user = User.query.filter_by(email="Admin@gmail.com",f_rid=1).first()
@@ -133,6 +155,82 @@ def auto_admin_creation():
         )
         db.session.add(admin_user)
         db.session.commit()
+
+@app.route('/create_theatre',methods=['GET','POST'])
+def create_theatre():
+    if request.method=='GET':
+        return render_template("create_theatre.html")
+    else:
+        theatre_email = request.form.get("theatre_email")
+        theatre_password = request.form.get("theatre_password")
+        theatre_name = request.form.get("theatre_name")
+        theatre_location = request.form.get("theatre_location")
+        theatre_franchise = request.form.get("theatre_franchise")
+
+        check_user = User.query.filter_by(email=theatre_email).first()
+
+        if not check_user:
+            new_theatre_user = User(email=theatre_email,
+                                    password=theatre_password,
+                                    f_rid=3)
+            db.session.add(new_theatre_user)
+            db.session.commit()
+
+            new_theatre = Theatre(
+                theatre_name=theatre_name,
+                location=theatre_location,
+                franchise=theatre_franchise,
+                u_id=new_theatre_user.uid
+            )
+            db.session.add(new_theatre)
+            db.session.commit()
+            flash("Theatre created successfully")
+            return redirect("/dashboard")
+        
+        else:
+            print("User with this email already exists")
+            flash("User with this email already exists")
+            return redirect("/create_theatre")
+
+@app.route('/edit_theatre/<argtid>',methods=['GET','POST'])
+def edit_theatre(argtid):
+    if request.method=="GET":
+        current_theatre = Theatre.query.filter_by(tid=argtid).first()
+        return render_template("edit_theatre.html",jinjacurrent_theatre=current_theatre)
+    else:
+        new_theatre_name = request.form.get("theatre_name")
+        new_theatre_location = request.form.get("theatre_location")
+        new_theatre_franchise = request.form.get("theatre_franchise")
+        
+        current_theatre = Theatre.query.filter_by(tid=argtid).first()
+        check_theatre = Theatre.query.filter_by(theatre_name=new_theatre_name).first()
+        if check_theatre and str(check_theatre.tid)==argtid:
+            current_theatre.location = new_theatre_location
+            current_theatre.franchise = new_theatre_franchise
+            db.session.commit()
+            flash("Theatre details updated successfully")
+            return redirect("/dashboard")
+        if not check_theatre:
+            current_theatre.theatre_name = new_theatre_name
+            current_theatre.location = new_theatre_location
+            current_theatre.franchise = new_theatre_franchise
+            db.session.commit()
+            flash("Theatre details updated successfully")
+            return redirect("/dashboard")
+        if check_theatre and str(check_theatre.tid)!=argtid:
+            flash("Theatre name already exists, please choose a different name")
+            return redirect(f"/edit_theatre/{argtid}")
+
+@app.route('/delete_theatre/<argtid>',methods=['GET'])
+def delete_theatre(argtid):
+    current_theatre = Theatre.query.filter_by(tid=argtid).first()
+    current_user = User.query.filter_by(uid=current_theatre.u_id).first()
+    db.session.delete(current_theatre)
+    db.session.delete(current_user)
+    db.session.commit()
+    flash("Theatre deleted successfully")
+    return redirect("/dashboard")
+
 
 if __name__ == '__main__':
     with app.app_context():

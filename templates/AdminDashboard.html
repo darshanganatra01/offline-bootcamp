@@ -16,5 +16,28 @@
         {% endif %}
     {% endwith %}
     <h2>Hii admin {{jinjaemail}}</h2>
+
+    <h2>Theatres List</h2>
+    <hr>
+    {% if theatres!=[] %}
+        <ul>
+        {% for theatre in theatres %}
+        <li>{{theatre.theatre_name}} - {{theatre.location}} - {{theatre.franchise}}</li>
+        <a href="/edit_theatre/{{theatre.tid}}">Edit this theatre details</a>
+        <a href="/delete_theatre/{{theatre.tid}}">Delete this theatre</a>
+        {% endfor %}
+
+        </ul>
+        <hr>
+        <a href="/create_theatre" >Create More Theatres</a>
+    {% else %}
+        <h3>No Theatres Found</h3>
+        <hr>
+        <a href="/create_theatre" >Create IT now!</a>
+        {% endif %}
+
+
+
+
 </body>
 </html>

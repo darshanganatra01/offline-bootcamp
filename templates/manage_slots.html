@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- Keep your flashing messages block as-is -->
+
+<form method="POST" action="/manage-slots">
+  {% for day in dates %}
+    <div style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+      <div><h4>{{ day.strftime('%A, %Y-%m-%d') }}</h4></div>
+
+      <div>
+        {% for time_str, display_label in slot_labels.items() %}
+          {% set canonical_key = day.strftime('%Y-%m-%d') + '|' + time_str %}
+          <div style="display:inline-block; margin-right:15px; padding:5px; border:1px solid #eee; min-width:180px; text-align:left;">
+            {% if canonical_key in existing_slots_map %}
+              {% set existing_slot = existing_slots_map[canonical_key] %}
+              <label>{{ display_label }}</label>
+              {% if existing_slot.status == 'Available' %}
+                <span style="color:green;">(Available)</span>
+                <!-- cancel via button that posts to the cancel route (no nested form) -->
+                <button 
+                  type="submit" 
+                  formaction="{{ url_for('cancel_slot', booking_id=existing_slot.bid) }}"
+                  formmethod="post"
+                  onclick="return confirm('Cancel this available slot?');"
+                >
+                  Cancel Slot
+                </button>
+              {% elif existing_slot.status == 'Booked' %}
+                <span style="font-weight:bold; color:red;">(Booked)</span>
+              {% else %}
+                <span style="color:gray;">({{ existing_slot.status }})</span>
+              {% endif %}
+            {% else %}
+              <!-- not existing: show checkbox to create -->
+              <input type="checkbox"
+                     name="slots"
+                     value="{{ canonical_key }}"
+                     id="slot_{{ day.strftime('%Y-%m-%d') }}_{{ time_str }}">
+              <label for="slot_{{ day.strftime('%Y-%m-%d') }}_{{ time_str }}">
+                {{ display_label }} (Add)
+              </label>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <br>
+  <input type="submit" value="Update Slots">
+</form>
+
+</body>
+</html>

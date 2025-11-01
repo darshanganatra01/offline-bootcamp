@@ -3,18 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>User Dashboard</title>
 </head>
 <body>
-    {% with messages = get_flashed_messages() %}
+    <h2>Welcome, {{ jinjaemail }}</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
+            {% for category, message in messages %}
+                <div style="margin:10px; padding:10px; border:1px solid #ccc;">
+                    <strong>{{ category.capitalize() }}:</strong> {{ message }}
+                </div>
             {% endfor %}
-            </ul>
         {% endif %}
     {% endwith %}
-    <h2>{{jinjaemail}}</h2>
+
+    <hr>
+
+    <!-- My Bookings -->
+    <h3>Upcoming Bookings (Today + Next 7 Days)</h3>
+    {% if my_bookings %}
+        {% for slot in my_bookings %}
+            <div style="border:1px solid #ddd; padding:10px; margin:8px 0;">
+                <strong>{{ slot.theatre.theatre_name }}</strong><br>
+                {{ slot.booking_date.strftime('%A, %Y-%m-%d') }} |
+                {{ slot.booking_time.strftime('%H:%M') }}
+                <form method="POST" action="{{ url_for('cancel_booking', booking_id=slot.bid) }}" style="display:inline;">
+                    <button type="submit">Cancel</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You have no upcoming bookings.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- Available Slots -->
+    <h3>Available Slots (Today + Next 7 Days)</h3>
+    <h4>Look for which Theatre you want to see the available slots</h4>
+    {% for theatre in all_theatres %}
+    <a href="/theatre_profile/{{theatre.tid}}">{{theatre.theatre_name}}</a>
+    {% endfor %}
+
+    <hr>
+
+    <!-- Past Bookings -->
+    <h3>Past Bookings</h3>
+    {% if past_bookings %}
+        {% for slot in past_bookings %}
+            <div style="border:1px solid #ccc; padding:10px; margin:8px 0; background:#f8f8f8;">
+                <strong>{{ slot.theatre.theatre_name }}</strong><br>
+                {{ slot.booking_date.strftime('%A, %Y-%m-%d') }} |
+                {{ slot.booking_time.strftime('%H:%M') }}
+                <span style="color: gray;">(Past)</span>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No past bookings found.</p>
+    {% endif %}
 </body>
 </html>

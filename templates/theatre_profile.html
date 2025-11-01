@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    {% for slot in available_slots %}
+  <form method="post" action="{{ url_for('book_slot', booking_id=slot.bid) }}">
+    <p>
+      {{ slot.booking_date.strftime('%Y-%m-%d') }} -
+      {{ slot.booking_time.strftime('%H:%M') }} at
+      {{ slot.theatre.name }}
+      <button type="submit">Book</button>
+    </p>
+  </form>
+{% else %}
+  <p>No slots available.</p>
+{% endfor %}
+</body>
+</html>

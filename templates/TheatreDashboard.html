@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theatre Dashboard</title>
+</head>
+<body>
+    <h2>Welcome, {{ current_theatre.theatre_name }}</h2>
+
+    <!-- TODAY'S BOOKINGS -->
+    <h3>Today's Appointments</h3>
+    {% if todays_bookings %}
+        {% for booking, email in todays_bookings %}
+            <p>
+                Time: {{ booking.booking_time.strftime('%H:%M') }}
+                - Booked by: {{ email }}
+            </p>
+        {% endfor %}
+    {% else %}
+        <p>No appointments today.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- UPCOMING BOOKINGS -->
+    <h3>Upcoming Bookings (Next 7 Days)</h3>
+    {% if upcoming_bookings %}
+        {% for booking, email in upcoming_bookings %}
+            <p>
+                On: {{ booking.booking_date.strftime('%Y-%m-%d') }}
+                at {{ booking.booking_time.strftime('%H:%M') }}
+                - Booked by: {{ email }}
+            </p>
+        {% endfor %}
+    {% else %}
+        <p>You have no upcoming bookings in the next 7 days.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- SLOT SETUP REMINDER -->
+    <h3>Slot Setup Reminder</h3>
+    {% if missing_dates %}
+        <p>You have not created any slots for the following days (next 7 days):</p>
+        <ul>
+            {% for day in missing_dates %}
+                <li>{{ day.strftime('%A, %Y-%m-%d') }}</li>
+            {% endfor %}
+        </ul>
+        <a href="/manage-slots">Go to Manage Slots</a>
+    {% else %}
+        <p>✅ Great job! You have created slots for all the next 7 days.</p>
+    {% endif %}
+</body>
+</html>

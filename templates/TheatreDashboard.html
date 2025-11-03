@@ -9,17 +9,29 @@
     <h2>Welcome, {{ current_theatre.theatre_name }}</h2>
 
     <!-- TODAY'S BOOKINGS -->
-    <h3>Today's Appointments</h3>
     {% if todays_bookings %}
+    <form method="POST" action="{{ url_for('complete_booking') }}">
         {% for booking, email in todays_bookings %}
-            <p>
-                Time: {{ booking.booking_time.strftime('%H:%M') }}
-                - Booked by: {{ email }}
-            </p>
+            <div style="margin-bottom:10px; border-bottom:1px solid #ccc; padding:5px;">
+                <p>
+                    ⏰ Time: {{ booking.booking_time.strftime('%H:%M') }}  
+                    👤 Booked by: {{ email }}
+                </p>
+                <label for="feedback_{{ booking.bid }}">Feedback:</label><br>
+                <textarea name="feedback_{{ booking.bid }}" id="feedback_{{ booking.bid }}" rows="2" cols="40"
+                          placeholder="Enter feedback for this booking..."></textarea><br>
+                
+                <!-- Button to complete booking -->
+                <button type="submit" name="booking_id" value="{{ booking.bid }}"
+                        onclick="return confirm('Mark this booking as completed?');">
+                    ✅ Complete Booking
+                </button>
+            </div>
         {% endfor %}
-    {% else %}
-        <p>No appointments today.</p>
-    {% endif %}
+    </form>
+{% else %}
+    <p>No appointments today.</p>
+{% endif %}
 
     <hr>
 

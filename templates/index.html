@@ -6,6 +6,16 @@
     <title>Document</title>
 </head>
 <body>
+     <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="margin:10px; padding:10px; border:1px solid #ccc;">
+                    <strong>{{ category.capitalize() }}:</strong> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <h2>Welcome to the landing page user!</h2>
     <h3><a href="/login">Please login</a></h3>
     <h3><a href="/signup">Not a registered user Click here and sigup</a></h3>

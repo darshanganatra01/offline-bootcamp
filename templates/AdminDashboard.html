@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin Dashboard</title>
+    <style>
+        .graph-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .graph-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+        .search-box {
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -15,29 +33,57 @@
             </ul>
         {% endif %}
     {% endwith %}
-    <h2>Hii admin {{jinjaemail}}</h2>
+
+    <h2>Hi Admin {{ jinjaemail }}</h2>
+
+    <!-- 🔍 Search Form -->
+    <div class="search-box">
+        <form method="GET" action="{{ url_for('admin_search') }}">
+            <input type="text" name="query" placeholder="Search users or theatres..." required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="graph-container">
+        <div class="graph-card">
+            <h4>Users by Role</h4>
+            <img src="{{ url_for('static', filename=graphs['users_by_role']) }}" alt="Users by Role">
+        </div>
+
+        <div class="graph-card">
+            <h4>Booking Status Distribution</h4>
+            <img src="{{ url_for('static', filename=graphs['bookings_status']) }}" alt="Booking Status">
+        </div>
+
+        <div class="graph-card">
+            <h4>Bookings per Theatre</h4>
+            <img src="{{ url_for('static', filename=graphs['bookings_per_theatre']) }}" alt="Bookings per Theatre">
+        </div>
+
+        <div class="graph-card">
+            <h4>Bookings in Last 7 Days</h4>
+            <img src="{{ url_for('static', filename=graphs['daily_trend']) }}" alt="Daily Booking Trend">
+        </div>
+    </div>
 
     <h2>Theatres List</h2>
     <hr>
-    {% if theatres!=[] %}
+    {% if theatres %}
         <ul>
         {% for theatre in theatres %}
-        <li>{{theatre.theatre_name}} - {{theatre.location}} - {{theatre.franchise}}</li>
-        <a href="/edit_theatre/{{theatre.tid}}">Edit this theatre details</a>
-        <a href="/delete_theatre/{{theatre.tid}}">Delete this theatre</a>
+            <li>{{ theatre.theatre_name }} - {{ theatre.location }} - {{ theatre.franchise }}</li>
+            <a href="/edit_theatre/{{ theatre.tid }}">Edit this theatre details</a>
+            <a href="/delete_theatre/{{ theatre.tid }}">Delete this theatre</a>
         {% endfor %}
-
         </ul>
         <hr>
-        <a href="/create_theatre" >Create More Theatres</a>
+        <a href="/create_theatre">Create More Theatres</a>
     {% else %}
         <h3>No Theatres Found</h3>
         <hr>
-        <a href="/create_theatre" >Create IT now!</a>
-        {% endif %}
+        <a href="/create_theatre">Create It Now!</a>
+    {% endif %}
 
-
-
-
+    <a href="/logout">Logout</a>
 </body>
 </html>

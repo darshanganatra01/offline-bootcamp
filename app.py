@@ -23,7 +23,7 @@ SLOT_TIME_OBJECTS = {
     "15:00": time(15, 0),
     "18:00": time(18, 0),
 }
-
+#[4,5,6,7,8,9,0]
 # Human-friendly display labels
 SLOT_LABELS = {
     "09:00": "09:00 AM",
@@ -102,7 +102,9 @@ class CompletedBooking(db.Model):
 
 
 
-
+#<CompletedBooking x>.booking = <Booking y>
+# <Booking y>.user ===> <User z>
+# <Booking y>.theatre ===> <Theatre p>
 
 
 
@@ -158,6 +160,9 @@ def manage_slots_page():
             Booking.booking_date <= end_date
         ).all()
 
+        print(wanted_set)
+
+
         # 3. Build existing set of canonical keys
         existing_set = set()
         existing_map = {}  # also maintain map if you want to inspect objects here
@@ -166,8 +171,14 @@ def manage_slots_page():
             existing_set.add(key)
             existing_map[key] = s
 
+
+        print(existing_set)
+
         # 4. Slots to create = wanted - existing
         to_create = wanted_set - existing_set
+
+        print(to_create)
+
 
         if not to_create:
             flash("No new slots were selected to add.", "info")
@@ -204,6 +215,10 @@ def manage_slots_page():
     for slot in existing_slots_db:
         key = f"{slot.booking_date.strftime('%Y-%m-%d')}|{slot.booking_time.strftime('%H:%M')}"
         existing_slots_map[key] = slot
+    
+    print(SLOT_LABELS)
+    print(all_7_dates)
+    print(existing_slots_map)
 
     return render_template(
         "manage_slots.html",
@@ -317,19 +332,115 @@ def signup_page():
             flash("User created successfully, please login")
             return redirect("/login")
         
+
+
+
+
 @app.route("/dashboard")
 def dashboard_page():
     jinjaemail = session.get("email")
     role = session.get("f_rid")
     if role == 1:
+        import os
+        import matplotlib
+        matplotlib.use('Agg') 
+        import matplotlib.pyplot as plt
+         # --- Query data ---
         theatres = Theatre.query.all()
         users = User.query.all()
-        return render_template("AdminDashboard.html",jinjaemail=jinjaemail,theatres=theatres,users=users)
+        bookings = Booking.query.all()
+
+        # Create /static/graphs folder if not exists
+        graphs_path = os.path.join(app.root_path, 'static', 'graphs')
+        os.makedirs(graphs_path, exist_ok=True)
+
+        # ---------------------------------------------------------------------
+        # 1️⃣ Graph: Number of Users by Role
+        # ---------------------------------------------------------------------
+        roles = Role.query.all()
+        role_names = [r.role_name for r in roles]
+        role_counts = [User.query.filter_by(f_rid=r.rid).count() for r in roles]
+
+        plt.figure(figsize=(5, 4))
+        plt.bar(role_names, role_counts)
+        plt.title("Users by Role")
+        plt.xlabel("Role")
+        plt.ylabel("Count")
+        users_by_role_path = os.path.join(graphs_path, "users_by_role.png")
+        plt.savefig(users_by_role_path)
+        plt.close()
+
+        # ---------------------------------------------------------------------
+        # 2️⃣ Graph: Bookings by Status
+        # ---------------------------------------------------------------------
+        statuses = ['Available', 'Booked', 'Canceled', 'Completed']
+        status_counts = [Booking.query.filter_by(status=s).count() for s in statuses]
+
+        plt.figure(figsize=(5, 4))
+        plt.pie(status_counts, labels=statuses, autopct='%1.1f%%', startangle=140)
+        plt.title("Booking Status Distribution")
+        bookings_status_path = os.path.join(graphs_path, "bookings_status.png")
+        plt.savefig(bookings_status_path)
+        plt.close()
+
+        # ---------------------------------------------------------------------
+        # 3️⃣ Graph: Bookings per Theatre
+        # ---------------------------------------------------------------------
+        theatre_names = [t.theatre_name for t in theatres]
+        theatre_counts = [Booking.query.filter_by(t_id=t.tid).count() for t in theatres]
+
+        plt.figure(figsize=(7, 4))
+        plt.barh(theatre_names, theatre_counts)
+        plt.title("Total Bookings per Theatre")
+        plt.xlabel("Number of Bookings")
+        bookings_per_theatre_path = os.path.join(graphs_path, "bookings_per_theatre.png")
+        plt.tight_layout()
+        plt.savefig(bookings_per_theatre_path)
+        plt.close()
+
+        # ---------------------------------------------------------------------
+        # 4️⃣ Graph: Daily Booking Trend (last 7 days)
+        # ---------------------------------------------------------------------
+        from datetime import timedelta
+        from datetime import date
+        today = date.today()
+        last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
+        booking_counts = [
+            Booking.query.filter(Booking.booking_date == d).count()
+            for d in last_7_days
+        ]
+
+        plt.figure(figsize=(7, 4))
+        plt.plot([d.strftime('%d-%b') for d in last_7_days], booking_counts, marker='o')
+        plt.title("Bookings in the Last 7 Days")
+        plt.xlabel("Date")
+        plt.ylabel("Number of Bookings")
+        daily_trend_path = os.path.join(graphs_path, "daily_trend.png")
+        plt.savefig(daily_trend_path)
+        plt.close()
+
+
+        # ---------------------------------------------------------------------
+        # Pass everything to the template
+        # ---------------------------------------------------------------------
+        return render_template(
+            "AdminDashboard.html",
+            jinjaemail=jinjaemail,
+            theatres=theatres,
+            users=users,
+            graphs={
+                "users_by_role": "graphs/users_by_role.png",
+                "bookings_status": "graphs/bookings_status.png",
+                "bookings_per_theatre": "graphs/bookings_per_theatre.png",
+                "daily_trend": "graphs/daily_trend.png"
+            }
+        )
+
     if role == 2:
             current_user = User.query.filter_by(email=jinjaemail).first()
             uid = current_user.uid
             all_theatres=Theatre.query.all()
-
+            from datetime import datetime,timedelta,date
             now = datetime.now()
             today = now.date()
             end_date = today + timedelta(days=7)
@@ -382,9 +493,12 @@ def dashboard_page():
             flash("No theatre found for your account.", "error")
             return redirect(url_for("dashboard_page"))
         tid = current_theatre.tid
-
-        # 2️⃣ Define time ranges
+        from datetime import timedelta,datetime
+        from datetime import date
+        # 2️⃣ Define time ranges 
         today = date.today()
+        print(datetime.today())
+        print(today)
         tomorrow = today + timedelta(days=1)
         end_date = today + timedelta(days=7)
 
@@ -422,6 +536,8 @@ def dashboard_page():
             Booking.booking_date <= end_date
         ).all()
 
+        print(dates_with_slots)
+
         setup_dates = {result[0] for result in dates_with_slots}
 
         # 6️⃣ Build list of next 7 days and find missing ones
@@ -437,6 +553,62 @@ def dashboard_page():
             upcoming_bookings=upcoming_bookings,
             missing_dates=missing_dates
         )
+
+    flash("you have not logged in")
+    return redirect('/')
+    
+@app.route("/complete-booking", methods=["POST"])
+def complete_booking():
+    # --- Authentication ---
+    jinjaemail = session.get("email")
+    role = session.get("f_rid")
+    if role != 3:  # Theatre role only
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("dashboard_page"))
+
+    current_user = User.query.filter_by(email=jinjaemail).first()
+    current_theatre = Theatre.query.filter_by(u_id=current_user.uid).first()
+    if not current_theatre:
+        flash("No theatre found for your account.", "error")
+        return redirect(url_for("dashboard_page"))
+
+    # --- Get booking ID from form ---
+    booking_id = request.form.get("booking_id")
+    if not booking_id:
+        flash("No booking selected.", "error")
+        return redirect('/dashboard')
+
+    booking = Booking.query.get(booking_id)
+    if not booking:
+        flash("Booking not found.", "error")
+        return redirect('/dashboard')
+
+    # --- Security Check ---
+    if booking.t_id != current_theatre.tid:
+        flash("This booking does not belong to your theatre.", "error")
+        return redirect('/dashboard')
+
+    # --- Only allow completion for Booked slots ---
+    if booking.status != "Booked":
+        flash("Only booked slots can be marked as completed.", "warning")
+        return redirect('/dashboard')
+
+    # --- Get feedback from the form ---
+    feedback_key = f"feedback_{booking.bid}"
+    feedback_text = request.form.get(feedback_key, "").strip()
+
+    # --- Mark booking as Completed ---
+    booking.status = "Completed"
+    db.session.add(booking)
+
+    # --- Add record to CompletedBooking ---
+    completed = CompletedBooking(bid=booking.bid, review=feedback_text)
+    db.session.add(completed)
+
+    db.session.commit()
+
+    flash("Booking marked as completed successfully!", "success")
+    return redirect('/dashboard')
     
 
 @app.route("/theatre_profile/<tid>")
@@ -501,6 +673,51 @@ def book_slot(booking_id):
             flash("Successfully booked the slot!", "success")
 
     return redirect('/dashboard')
+
+
+@app.route("/admin-search", methods=["GET"])
+def admin_search():
+    # --- Only Admins ---
+    role = session.get("f_rid")
+    jinjaemail = session.get("email")
+    if role != 1:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("dashboard_page"))
+
+    query = request.args.get("query", "").strip()
+    print(query)
+    if not query:
+        flash("Please enter something to search.", "warning")
+        return redirect(url_for("dashboard_page"))
+
+    # --- Search Theatres ---
+    theatres = Theatre.query.filter(Theatre.franchise.like(f"%{query}%")).all()
+
+    # --- Search Users ---
+    users = User.query.filter(
+        (User.email.ilike(f"%{query}%")) |
+        (User.uid.cast(db.String).ilike(f"%{query}%"))
+    ).all()
+
+    return render_template(
+        "search_results.html",
+        jinjaemail=jinjaemail,
+        query=query,
+        theatres=theatres,
+        users=users
+    )
+
+
+@app.route('/logout')
+def logout():
+    session.pop("f_rid")
+    session.pop("email")
+    return redirect("/")
+
+
+
+
+
 
 
 @app.route("/cancel-booking/<int:booking_id>", methods=["POST"])

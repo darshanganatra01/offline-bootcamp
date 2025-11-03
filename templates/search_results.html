@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 5px 10px;
+            background: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Search Results for "{{ query }}"</h2>
+    <a href="{{ url_for('dashboard_page') }}" class="back-link">⬅ Back to Dashboard</a>
+
+    <div class="section">
+        <h3>🎭 Matching Theatres</h3>
+        {% if theatres %}
+            <ul>
+            {% for t in theatres %}
+                <li>
+                    <strong>{{ t.theatre_name }}</strong> — {{ t.location }} — {{ t.franchise }}
+                    <br>
+                    <a href="/edit_theatre/{{ t.tid }}">Edit</a> |
+                    <a href="/delete_theatre/{{ t.tid }}">Delete</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No matching theatres found.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h3>👤 Matching Users</h3>
+        {% if users %}
+            <ul>
+            {% for u in users %}
+                <li>
+                    <strong>Email:</strong> {{ u.email }}  
+                    | Role ID: {{ u.f_rid }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No matching users found.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
